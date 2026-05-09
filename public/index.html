@@ -1,0 +1,430 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Activity Log - Stateful</title>
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <style>
+        :root {
+            --sidebar-width: 250px;
+            --primary-color: #1a73e8;
+            --bg-color: #f8f9fa;
+            --sidebar-bg: #202124;
+            --text-color: #3c4043;
+            --error-color: #d93025;
+            --header-bg: #e8eaed;
+            --md-heading-color: #4285f4;
+        }
+
+        body {
+            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            margin: 0;
+            display: flex;
+            height: 100vh;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+        }
+
+        /* Sidebar */
+        .sidebar {
+            width: var(--sidebar-width);
+            background-color: var(--sidebar-bg);
+            color: white;
+            display: flex;
+            flex-direction: column;
+            padding-top: 2rem;
+        }
+
+        .sidebar h2 {
+            text-align: center;
+            font-size: 1.2rem;
+            margin-bottom: 2rem;
+            color: #e8eaed;
+        }
+
+        .nav-item {
+            padding: 1rem 2rem;
+            cursor: pointer;
+            transition: background 0.2s;
+            border-left: 4px solid transparent;
+        }
+
+        .nav-item:hover {
+            background-color: #3c4043;
+        }
+
+        .nav-item.active {
+            background-color: #3c4043;
+            border-left: 4px solid var(--primary-color);
+        }
+
+        /* Main Content */
+        .main-content {
+            flex: 1;
+            overflow-y: auto;
+            padding: 2rem;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            padding: 0;
+            border-radius: 8px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.12);
+            overflow: hidden;
+        }
+
+        .container-header {
+            background-color: var(--header-bg);
+            padding: 1.5rem 2rem;
+            border-bottom: 1px solid #dadce0;
+        }
+
+        .container-header h1 {
+            margin: 0;
+            font-size: 1.5rem;
+            color: #202124;
+        }
+
+        .container-body {
+            padding: 2rem;
+        }
+
+        /* Form Styling */
+        .form-group { margin-bottom: 1.5rem; position: relative; }
+        label { display: block; margin-bottom: 0.5rem; font-weight: bold; }
+        select, input, textarea {
+            width: 100%;
+            padding: 0.8rem;
+            border: 1px solid #dadce0;
+            border-radius: 4px;
+            box-sizing: border-box;
+            font-size: 1rem;
+        }
+        textarea { min-height: 150px; font-family: monospace; }
+
+        .time-input-group {
+            display: flex;
+            gap: 0.5rem;
+            align-items: center;
+        }
+        .time-input-group input[type="date"] { flex: 2; }
+        .time-input-group input[type="number"] { flex: 1; text-align: center; }
+        .time-input-group span { font-weight: bold; font-size: 1.2rem; }
+
+        .error-message {
+            color: var(--error-color);
+            font-size: 0.85rem;
+            margin-top: 0.3rem;
+            display: none;
+        }
+
+        button {
+            background-color: var(--primary-color);
+            color: white;
+            padding: 0.8rem 2rem;
+            border: none;
+            border-radius: 4px;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        button:hover { background-color: #1557b0; }
+        button:disabled { background-color: #ccc; cursor: not-allowed; }
+
+        /* Modal */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.5);
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+
+        .modal {
+            background: white;
+            padding: 2rem;
+            border-radius: 8px;
+            max-width: 500px;
+            width: 90%;
+        }
+
+        .modal-buttons {
+            display: flex;
+            justify-content: flex-end;
+            gap: 1rem;
+            margin-top: 1.5rem;
+        }
+
+        .btn-cancel { background-color: #5f6368; }
+
+        /* Activity List */
+        .activity-card {
+            border-bottom: 1px solid #e8eaed;
+            padding: 1.5rem 0;
+        }
+        .activity-card:last-child { border-bottom: none; }
+        .activity-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 0.5rem;
+        }
+        .activity-type {
+            background: #e8f0fe;
+            color: #1967d2;
+            padding: 0.2rem 0.8rem;
+            border-radius: 12px;
+            font-size: 0.85rem;
+            font-weight: bold;
+        }
+        .activity-time { font-size: 0.9rem; color: #5f6368; }
+        
+        /* Markdown Overrides */
+        .activity-details {
+            line-height: 1.6;
+            color: var(--text-color);
+        }
+        .activity-details h1, .activity-details h2, .activity-details h3, 
+        .activity-details h4, .activity-details h5, .activity-details h6 {
+            color: var(--md-heading-color);
+            margin-top: 1rem;
+            margin-bottom: 0.5rem;
+        }
+        .activity-details h1 { font-size: 1.4rem; }
+        .activity-details h2 { font-size: 1.2rem; }
+        .activity-details h3 { font-size: 1.1rem; }
+    </style>
+</head>
+<body>
+    <div class="sidebar">
+        <h2>Activity Log</h2>
+        <div class="nav-item active" onclick="showView('log')">Log Activities</div>
+        <div class="nav-item" onclick="showView('view')">View Activities</div>
+    </div>
+
+    <div class="main-content">
+        <!-- Log Activities View -->
+        <div id="log-view" class="container">
+            <div class="container-header">
+                <h1>Log New Activity</h1>
+            </div>
+            <div class="container-body">
+                <form id="activity-form">
+                    <div class="form-group">
+                        <label>Activity Type</label>
+                        <select id="type" required>
+                            <option value="Study">Study</option>
+                            <option value="Work">Work</option>
+                            <option value="Workout">Workout</option>
+                            <option value="Lecture">Lecture</option>
+                            <option value="Entertainment">Entertainment</option>
+                            <option value="Travel">Travel</option>
+                            <option value="Others">Others</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>Start Time (Date | Hour | Minute)</label>
+                        <div class="time-input-group">
+                            <input type="date" id="start-date" required onchange="validateTimes()">
+                            <input type="number" id="start-hour" min="0" max="23" placeholder="HH" required onchange="validateTimes()">
+                            <span>:</span>
+                            <input type="number" id="start-minute" min="0" max="59" placeholder="MM" required onchange="validateTimes()">
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label>End Time (Date | Hour | Minute)</label>
+                        <div class="time-input-group">
+                            <input type="date" id="end-date" required onchange="validateTimes()">
+                            <input type="number" id="end-hour" min="0" max="23" placeholder="HH" required onchange="validateTimes()">
+                            <span>:</span>
+                            <input type="number" id="end-minute" min="0" max="59" placeholder="MM" required onchange="validateTimes()">
+                        </div>
+                        <div id="time-error" class="error-message">End time cannot be earlier than start time.</div>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Details (Markdown supported)</label>
+                        <textarea id="details" placeholder="What did you do?"></textarea>
+                    </div>
+                    <button type="button" id="save-btn" onclick="confirmSave()">Save Activity</button>
+                </form>
+            </div>
+        </div>
+
+        <!-- View Activities View -->
+        <div id="view-view" class="container" style="display: none;">
+            <div class="container-header">
+                <h1>Recent Activities</h1>
+            </div>
+            <div class="container-body">
+                <div id="activities-list">Loading...</div>
+            </div>
+        </div>
+    </div>
+
+    <div id="modal-overlay" class="modal-overlay">
+        <div class="modal">
+            <h3>Confirm Entry</h3>
+            <div id="confirm-summary"></div>
+            <div class="modal-buttons">
+                <button class="btn-cancel" onclick="closeModal()">Cancel</button>
+                <button onclick="saveActivity()">Confirm & Save</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function setDefaultTimes() {
+            const now = new Date();
+            const year = now.getFullYear();
+            const month = String(now.getMonth() + 1).padStart(2, '0');
+            const day = String(now.getDate()).padStart(2, '0');
+            
+            const dateStr = `${year}-${month}-${day}`;
+            document.getElementById('start-date').value = dateStr;
+            document.getElementById('end-date').value = dateStr;
+            
+            document.getElementById('start-hour').value = now.getHours();
+            document.getElementById('start-minute').value = now.getMinutes();
+            document.getElementById('end-hour').value = now.getHours();
+            document.getElementById('end-minute').value = now.getMinutes();
+        }
+
+        function getFullDate(prefix) {
+            const date = document.getElementById(`${prefix}-date`).value;
+            const hour = String(document.getElementById(`${prefix}-hour`).value).padStart(2, '0');
+            const minute = String(document.getElementById(`${prefix}-minute`).value).padStart(2, '0');
+            if (!date || hour === "" || minute === "") return null;
+            return new Date(`${date}T${hour}:${minute}:00`);
+        }
+
+        function validateTimes() {
+            const start = getFullDate('start');
+            const end = getFullDate('end');
+            const errorEl = document.getElementById('time-error');
+            const saveBtn = document.getElementById('save-btn');
+
+            if (start && end) {
+                if (end < start) {
+                    errorEl.style.display = 'block';
+                    saveBtn.disabled = true;
+                    return false;
+                }
+            }
+            errorEl.style.display = 'none';
+            saveBtn.disabled = false;
+            return true;
+        }
+
+        function showView(view) {
+            document.getElementById('log-view').style.display = view === 'log' ? 'block' : 'none';
+            document.getElementById('view-view').style.display = view === 'view' ? 'block' : 'none';
+            
+            document.querySelectorAll('.nav-item').forEach(el => {
+                el.classList.toggle('active', el.textContent.toLowerCase().includes(view));
+            });
+
+            if (view === 'view') fetchActivities();
+        }
+
+        function confirmSave() {
+            if (!validateTimes()) return;
+
+            const type = document.getElementById('type').value;
+            const start = getFullDate('start');
+            const end = getFullDate('end');
+            
+            if (!start || !end) {
+                alert('Please fill in all time fields');
+                return;
+            }
+
+            document.getElementById('confirm-summary').innerHTML = `
+                <p><strong>Type:</strong> ${type}</p>
+                <p><strong>From:</strong> ${start.toLocaleString()}</p>
+                <p><strong>To:</strong> ${end.toLocaleString()}</p>
+            `;
+            document.getElementById('modal-overlay').style.display = 'flex';
+        }
+
+        function closeModal() {
+            document.getElementById('modal-overlay').style.display = 'none';
+        }
+
+        async function saveActivity() {
+            const start = getFullDate('start');
+            const end = getFullDate('end');
+
+            const data = {
+                activity_type: document.getElementById('type').value,
+                start_time: start.toISOString(),
+                end_time: end.toISOString(),
+                details: document.getElementById('details').value
+            };
+
+            try {
+                const res = await fetch('/api/activities', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(data)
+                });
+
+                if (res.ok) {
+                    closeModal();
+                    alert('Activity saved!');
+                    showView('view');
+                    document.getElementById('details').value = '';
+                    setDefaultTimes();
+                } else {
+                    alert('Error saving activity');
+                }
+            } catch (err) {
+                console.error(err);
+                alert('Connection error');
+            }
+        }
+
+        async function fetchActivities() {
+            const list = document.getElementById('activities-list');
+            list.innerHTML = 'Loading...';
+
+            try {
+                const res = await fetch('/api/activities');
+                const activities = await res.json();
+
+                if (activities.length === 0) {
+                    list.innerHTML = '<p>No activities logged yet.</p>';
+                    return;
+                }
+
+                list.innerHTML = activities.map(a => `
+                    <div class="activity-card">
+                        <div class="activity-header">
+                            <span class="activity-type">${a.activity_type}</span>
+                            <span class="activity-time">
+                                ${new Date(a.start_time).toLocaleString()} - 
+                                ${new Date(a.end_time).toLocaleString()}
+                            </span>
+                        </div>
+                        <div class="activity-details">
+                            ${marked.parse(a.details || '*No details provided*')}
+                        </div>
+                    </div>
+                `).join('');
+            } catch (err) {
+                list.innerHTML = 'Error loading activities.';
+            }
+        }
+
+        setDefaultTimes();
+    </script>
+</body>
+</html>

@@ -1,0 +1,21 @@
+services:
+  app:
+    build: .
+    restart: always
+    environment:
+      - DATABASE_URL=postgres://user:password@db:5432/activitylog
+    depends_on:
+      - db
+
+  db:
+    image: postgres:16-alpine
+    restart: always
+    environment:
+      - POSTGRES_USER=user
+      - POSTGRES_PASSWORD=password
+      - POSTGRES_DB=activitylog
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+volumes:
+  postgres_data:
