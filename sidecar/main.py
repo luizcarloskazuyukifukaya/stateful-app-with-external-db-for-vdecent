@@ -2,7 +2,7 @@ import os
 from fastapi import FastAPI, Header, HTTPException, Depends
 from pydantic import BaseModel
 from apscheduler.schedulers.background import BackgroundScheduler
-from backup import perform_backup, perform_restore, perform_purge, list_backups
+from backup import perform_backup, perform_restore, perform_purge, list_backups, restore_latest_on_startup
 import logging
 
 # Configure logging
@@ -64,6 +64,9 @@ def scheduled_backup():
 
 @app.on_event("startup")
 def start_scheduler():
+    # Initial restore check
+    restore_latest_on_startup()
+    
     interval_str = os.getenv('BACKUP_INTERVAL_MINS', '5')
     try:
         interval = int(interval_str)

@@ -36,11 +36,20 @@ This plan outlines the implementation of a sidecar container for automatic datab
 - [x] Update `README.md` with instructions on how to configure Google Drive and use the backup/restore API.
 
 ## Phase 6: Purge Function Implementation
-- [ ] Update `.env.example` with `BACKUP_RETENTION_COUNT`.
-- [ ] Implement `perform_purge` in `backup.py`:
+- [x] Update `.env.example` with `BACKUP_RETENTION_COUNT`.
+- [x] Implement `perform_purge` in `backup.py`:
     - Logic to list files in Google Drive folder.
     - Logic to delete oldest files if count exceeds `BACKUP_RETENTION_COUNT`.
-- [ ] Update `sidecar_api.py` (main.py):
+- [x] Update `sidecar_api.py` (main.py):
     - `POST /api/purge`: Secure endpoint to manually trigger purge.
     - Integration: Call `perform_purge` automatically after a successful `perform_backup`.
-- [ ] Verify purge logic works (automatic and manual).
+- [x] Verify purge logic works (automatic and manual).
+
+## Phase 7: Initial Restore on Startup
+- [ ] Implement `wait_for_db` logic to ensure PostgreSQL is ready.
+- [ ] Implement `restore_latest_on_startup` logic:
+    - On sidecar start, check if the database is empty or if it's the first run.
+    - Fetch the latest backup ID from Google Drive using the `list_backups` logic.
+    - Perform restore if a backup exists.
+- [ ] Update `main.py` startup event to trigger the initial restore.
+- [ ] Verify that initial restore correctly populates the database on fresh deployment.

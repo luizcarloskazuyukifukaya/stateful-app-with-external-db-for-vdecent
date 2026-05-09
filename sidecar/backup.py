@@ -142,6 +142,64 @@ def list_backups():
         logger.exception("An error occurred while listing backups")
         return False, str(e)
 
+import time
+import psycopg2
+from urllib.parse import urlparse
+
+def wait_for_db(timeout=60):
+    logger.info("Waiting for database to be ready...")
+    db_url = os.getenv('DATABASE_URL')
+    if not db_url:
+        logger.error("DATABASE_URL is not set.")
+        return False
+    
+    start_time = time.time()
+    while time.time() - start_time < timeout:
+        try:
+            conn = psycopg2.connect(db_url)
+            conn.close()
+            logger.info("Database is ready.")
+            return True
+        except Exception:
+            time.sleep(2)
+    
+    logger.error(f"Database wait timed out after {timeout} seconds.")
+    return False
+
+def is_db_empty():
+    try:
+        db_url = os.getenv('DATABASE_URL')
+        conn = psycopg2.connect(db_url)
+        cur = conn.cursor()
+        # Check if the 'activities' table exists and has data. 
+        # Note: The table name depends on the app. In the source repo it was 'activities'.
+        # We check for any user table as a generic indicator.
+        cur.execute("SELECT count(*) FROM information_schema.tables WHERE table_schema = 'public'")
+        table_count = cur.fetchone()[0]
+        conn.close()
+        return table_count == 0
+    except Exception as e:
+        logger.warning(f"Could not check if DB is empty: {e}. Assuming it might need restore.")
+        return True
+
+def restore_latest_on_startup():
+    logger.info("Checking if initial restore is needed...")
+    if not wait_for_db():
+        return
+    
+    if not is_db_empty():
+        logger.info("Database is not empty. Skipping initial restore.")
+        return
+
+    logger.info("Database is empty. Attempting to restore latest backup from Google Drive...")
+    success, backups = list_backups()
+    if success and backups:
+        latest_backup = backups[0]
+        logger.info(f"Found latest backup: {latest_backup['name']} (ID: {latest_backup['id']})")
+        perform_restore(latest_backup['id'])
+    else:
+        logger.info("No backups found in Google Drive to restore.")
+
 def perform_restore(file_id):
     logger.info(f"Starting database restore from file ID: {file_id}...")
     try:
