@@ -35,6 +35,11 @@ The sidecar exposes an API on port `8000`:
 - **Endpoint:** `POST /api/backup`
 - **Description:** Triggers an immediate backup of the database to Google Drive and runs the purge logic.
 
+#### List Backups
+- **Endpoint:** `GET /api/list`
+- **Headers:** `X-Auth-Token: <your-restore-auth-token>`
+- **Description:** Returns a list of all available backups in Google Drive, including their names (with timestamps), File IDs, and creation times.
+
 #### Trigger Manual Purge
 - **Endpoint:** `POST /api/purge`
 - **Headers:** `X-Auth-Token: <your-restore-auth-token>`

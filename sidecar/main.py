@@ -2,7 +2,7 @@ import os
 from fastapi import FastAPI, Header, HTTPException, Depends
 from pydantic import BaseModel
 from apscheduler.schedulers.background import BackgroundScheduler
-from backup import perform_backup, perform_restore, perform_purge
+from backup import perform_backup, perform_restore, perform_purge, list_backups
 import logging
 
 # Configure logging
@@ -46,6 +46,14 @@ async def trigger_purge(token: str = Depends(get_auth_token)):
         return {"status": "success", "message": message}
     else:
         raise HTTPException(status_code=500, detail=message)
+
+@app.get("/api/list")
+async def trigger_list(token: str = Depends(get_auth_token)):
+    success, result = list_backups()
+    if success:
+        return {"status": "success", "backups": result}
+    else:
+        raise HTTPException(status_code=500, detail=result)
 
 # Scheduler for automatic backups
 scheduler = BackgroundScheduler()
