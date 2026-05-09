@@ -1,4 +1,4 @@
-# Stateful App with External DB for V-Decent
+# Stateful App with External Backup for V-Decent
 
 A stateful activity logging application built with Node.js and PostgreSQL. Optimized for deployment on **Coolify**.
 
