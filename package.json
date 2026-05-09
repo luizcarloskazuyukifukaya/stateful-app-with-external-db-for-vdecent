@@ -1,5 +1,5 @@
 {
-  "name": "stateful-app-for-vdecent",
+  "name": "stateful-app-with-external-db-for-vdecent",
   "version": "1.0.0",
   "description": "A stateful activity logger optimized for Coolify",
   "main": "server.js",
