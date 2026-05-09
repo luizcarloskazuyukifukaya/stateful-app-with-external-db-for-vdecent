@@ -7,7 +7,8 @@ A stateful activity logging application built with Node.js and PostgreSQL. Optim
 - **Activity Tracking:** Log activities with types, timestamps, and Markdown notes.
 - **Data Persistence:** Uses PostgreSQL for reliable storage.
 - **Automated Backups:** Sidecar container automatically backs up the database to Google Drive every 5 minutes.
-- **Backup/Restore API:** Secure endpoints to trigger manual backups and restores.
+- **Backup Retention (Purge):** Automatically purges old backups based on a configurable retention count.
+- **Backup/Restore/Purge API:** Secure endpoints to trigger manual backups, restores, and purges.
 - **Coolify Optimized:** Standardized port 80 and Docker Compose orchestration.
 - **Themable:** Responsive UI with clean aesthetics.
 
@@ -20,8 +21,9 @@ The application includes a sidecar container that manages database backups to Go
 Set the following in your `.env` file:
 
 - `BACKUP_INTERVAL_MINS`: Frequency of automatic backups (minimum 5).
+- `BACKUP_RETENTION_COUNT`: Number of recent backups to keep in Google Drive. Oldest are purged.
 - `GOOGLE_DRIVE_FOLDER_ID`: The ID of the Google Drive folder where backups will be stored.
-- `RESTORE_AUTH_TOKEN`: A secret token used to authorize restore requests.
+- `RESTORE_AUTH_TOKEN`: A secret token used to authorize restore and purge requests.
 - `GOOGLE_CREDENTIALS_PATH`: Path to your Google API `credentials.json`.
 - `GOOGLE_TOKEN_PATH`: Path to your Google API `token.json`.
 
@@ -31,7 +33,12 @@ The sidecar exposes an API on port `8000`:
 
 #### Trigger Manual Backup
 - **Endpoint:** `POST /api/backup`
-- **Description:** Triggers an immediate backup of the database to Google Drive.
+- **Description:** Triggers an immediate backup of the database to Google Drive and runs the purge logic.
+
+#### Trigger Manual Purge
+- **Endpoint:** `POST /api/purge`
+- **Headers:** `X-Auth-Token: <your-restore-auth-token>`
+- **Description:** Triggers the purge logic manually to keep only `BACKUP_RETENTION_COUNT` files.
 
 #### Trigger Restore
 - **Endpoint:** `POST /api/restore`

@@ -79,10 +79,56 @@ def perform_backup():
         
         # Clean up local file
         os.remove(backup_file)
+
+        # Automatically purge if retention is set
+        perform_purge()
+        
         return True, file.get('id')
 
     except Exception as e:
         logger.exception("An error occurred during backup")
+        return False, str(e)
+
+def perform_purge():
+    logger.info("Checking for old backups to purge...")
+    try:
+        retention_count_str = os.getenv('BACKUP_RETENTION_COUNT')
+        if not retention_count_str:
+            logger.info("BACKUP_RETENTION_COUNT not set. Skipping purge.")
+            return True, "No retention set"
+        
+        retention_count = int(retention_count_str)
+        folder_id = os.getenv('GOOGLE_DRIVE_FOLDER_ID')
+        
+        service = get_gdrive_service()
+        
+        # List files in the folder, ordered by creation time
+        query = "mimeType = 'application/sql' and trashed = false"
+        if folder_id:
+            query += f" and '{folder_id}' in parents"
+        
+        results = service.files().list(
+            q=query,
+            spaces='drive',
+            fields='files(id, name, createdTime)',
+            orderBy='createdTime desc'
+        ).execute()
+        
+        files = results.get('files', [])
+        logger.info(f"Found {len(files)} backups.")
+
+        if len(files) > retention_count:
+            files_to_delete = files[retention_count:]
+            logger.info(f"Purging {len(files_to_delete)} old backups...")
+            for f in files_to_delete:
+                logger.info(f"Deleting old backup: {f['name']} (ID: {f['id']})")
+                service.files().delete(fileId=f['id']).execute()
+            return True, f"Purged {len(files_to_delete)} files"
+        
+        return True, "No files to purge"
+
+    except Exception as e:
+        logger.exception("An error occurred during purge")
         return False, str(e)
 
 def perform_restore(file_id):
