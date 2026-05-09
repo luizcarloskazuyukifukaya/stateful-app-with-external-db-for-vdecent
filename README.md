@@ -12,6 +12,31 @@ A stateful activity logging application built with Node.js and PostgreSQL. Optim
 - **Coolify Optimized:** Standardized port 80 and Docker Compose orchestration.
 - **Themable:** Responsive UI with clean aesthetics.
 
+## Backup & Store Design
+
+The system employs a **Sidecar Architecture** to decouple database management from the core application logic.
+
+### 1. Architecture Overview
+- **Core App Container:** Handles the web interface and activity logging.
+- **Database Container:** PostgreSQL 16 instance.
+- **Sidecar Container:** A Python-based service responsible for interacting with the database and Google Drive. It operates independently, ensuring that backup operations do not impact the application's availability.
+
+### 2. Google Drive as the Source of Truth
+- The sidecar is **stateless**. It does not maintain a local record of backups.
+- Every operation (listing, purging, restoring) queries Google Drive in real-time. This ensures that manual deletions in the Google Drive UI are immediately reflected in the system.
+
+### 3. Automated Backup Lifecycle
+- **Backup:** Runs every `BACKUP_INTERVAL_MINS` (default 5). It uses `pg_dump` to create a timestamped `.sql` file and uploads it to Google Drive.
+- **Purge:** After every successful backup, the sidecar checks the `BACKUP_RETENTION_COUNT`. It keeps the $N$ most recent backups and deletes the rest from Google Drive automatically.
+
+### 4. Zero-Touch Initial Setup
+- On the first deployment (when the database is empty), the sidecar automatically detects the lack of data.
+- It scans the Google Drive folder for the most recent backup and triggers an **Initial Restore** automatically.
+- This ensures that a new environment can be spun up and populated with the latest production state without manual intervention.
+
+### 5. Secure Operations
+- While backups are automatic, **Restore** and **Purge** operations via the API require a secure `X-Auth-Token`. This prevents unauthorized modifications to the database state.
+
 ## Backup & Restore Sidecar
 
 The application includes a sidecar container that manages database backups to Google Drive.
