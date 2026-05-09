@@ -17,5 +17,23 @@ services:
     volumes:
       - postgres_data:/var/lib/postgresql/data
 
+  sidecar:
+    build: ./sidecar
+    restart: always
+    environment:
+      - DATABASE_URL=postgres://user:password@db:5432/activitylog
+      - BACKUP_INTERVAL_MINS=${BACKUP_INTERVAL_MINS:-5}
+      - RESTORE_AUTH_TOKEN=${RESTORE_AUTH_TOKEN}
+      - GOOGLE_DRIVE_FOLDER_ID=${GOOGLE_DRIVE_FOLDER_ID}
+      - GOOGLE_CREDENTIALS_PATH=/app/credentials.json
+      - GOOGLE_TOKEN_PATH=/app/token.json
+    volumes:
+      - ./sidecar/credentials.json:/app/credentials.json
+      - ./sidecar/token.json:/app/token.json
+    depends_on:
+      - db
+    ports:
+      - "8000:8000"
+
 volumes:
   postgres_data:

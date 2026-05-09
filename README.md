@@ -6,8 +6,43 @@ A stateful activity logging application built with Node.js and PostgreSQL. Optim
 
 - **Activity Tracking:** Log activities with types, timestamps, and Markdown notes.
 - **Data Persistence:** Uses PostgreSQL for reliable storage.
+- **Automated Backups:** Sidecar container automatically backs up the database to Google Drive every 5 minutes.
+- **Backup/Restore API:** Secure endpoints to trigger manual backups and restores.
 - **Coolify Optimized:** Standardized port 80 and Docker Compose orchestration.
 - **Themable:** Responsive UI with clean aesthetics.
+
+## Backup & Restore Sidecar
+
+The application includes a sidecar container that manages database backups to Google Drive.
+
+### Configuration
+
+Set the following in your `.env` file:
+
+- `BACKUP_INTERVAL_MINS`: Frequency of automatic backups (minimum 5).
+- `GOOGLE_DRIVE_FOLDER_ID`: The ID of the Google Drive folder where backups will be stored.
+- `RESTORE_AUTH_TOKEN`: A secret token used to authorize restore requests.
+- `GOOGLE_CREDENTIALS_PATH`: Path to your Google API `credentials.json`.
+- `GOOGLE_TOKEN_PATH`: Path to your Google API `token.json`.
+
+### API Endpoints
+
+The sidecar exposes an API on port `8000`:
+
+#### Trigger Manual Backup
+- **Endpoint:** `POST /api/backup`
+- **Description:** Triggers an immediate backup of the database to Google Drive.
+
+#### Trigger Restore
+- **Endpoint:** `POST /api/restore`
+- **Headers:** `X-Auth-Token: <your-restore-auth-token>`
+- **Body:**
+  ```json
+  {
+    "file_id": "google-drive-file-id"
+  }
+  ```
+- **Description:** Downloads the specified file from Google Drive and restores the database.
 
 ## Local Development
 
