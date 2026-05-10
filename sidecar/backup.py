@@ -60,7 +60,7 @@ def perform_backup():
         env = os.environ.copy()
         # We might need to set PGPASSWORD if it's not in the URL or if pg_dump requires it separately
         # But pg_dump usually accepts the full URL
-        result = subprocess.run(['pg_dump', db_url, '-f', backup_file], capture_with_output=True, text=True)
+        result = subprocess.run(['pg_dump', db_url, '-f', backup_file], capture_output=True, text=True)
         
         if result.returncode != 0:
             logger.error(f"pg_dump failed: {result.stderr}")
@@ -218,7 +218,7 @@ def perform_restore(file_id):
         # Run psql to restore
         # WARNING: This might overwrite existing data. In a real scenario, we might want to drop and recreate the DB.
         # For simplicity, we assume psql can run against the DB_URL.
-        result = subprocess.run(['psql', db_url, '-f', restore_file], capture_with_output=True, text=True)
+        result = subprocess.run(['psql', db_url, '-f', restore_file], capture_output=True, text=True)
         
         if result.returncode != 0:
             logger.error(f"psql restore failed: {result.stderr}")
