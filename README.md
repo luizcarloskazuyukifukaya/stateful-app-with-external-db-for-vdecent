@@ -12,6 +12,13 @@ A stateful activity logging application built with Node.js and PostgreSQL. Optim
 - **Coolify Optimized:** Standardized port 80 and Docker Compose orchestration.
 - **Themable:** Responsive UI with clean aesthetics.
 
+## Documentation
+
+For detailed setup and authentication instructions, please refer to the following guides:
+
+- [Google Drive Environment Setup Guide](./google_drive_env_setup_guide.md): Comprehensive instructions on setting up Google Cloud projects and environment variables.
+- [Token JSON Generation Flow](./token_json_generation_flow.md): Step-by-step guide on how to generate the `token.json` file for Google API authentication.
+
 ## Backup & Store Design
 
 The system employs a **Sidecar Architecture** to decouple database management from the core application logic.
@@ -80,6 +87,25 @@ The sidecar exposes an API on port `8000`:
   }
   ```
 - **Description:** Downloads the specified file from Google Drive and restores the database.
+
+## Google Drive Authentication Setup
+This application uses Google Drive for backup and restore operations through the `sidecar` container.
+Before starting the application, you must provide Google OAuth credentials files:
+- `credentials.json`
+- `token.json`
+---
+
+### Directory Structure
+After cloning the repository, place the files inside the `sidecar` directory:
+```text
+project-root/
+├── docker-compose.yaml
+├── .env
+├── app/
+├── sidecar/
+│   ├── credentials.json
+│   ├── token.json
+│   └── Dockerfile
 
 ## Local Development
 
