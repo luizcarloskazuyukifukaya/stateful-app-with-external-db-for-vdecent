@@ -123,6 +123,29 @@ project-root/
    npm start
    ```
 
+## Testing Locally with Docker (Recommended)
+
+For a quick and consistent local test environment that includes the Database, Application, and Sidecar, use the provided helper script:
+
+1. **Make the script executable:**
+   ```bash
+   chmod +x run_local.sh
+   ```
+2. **Run the script:**
+   ```bash
+   ./run_local.sh
+   ```
+
+### What `run_local.sh` does:
+- **Port Detection:** Automatically finds an available port (starting from 80, then 8081-8085).
+- **Environment Setup:** Creates a `.env` file from `.env.example` if it doesn't exist.
+- **Docker Orchestration:** Build and launches all containers (App, DB, Sidecar) using `docker-compose`.
+- **Access URLs:** Provides the local and network URLs to access the application once it's up.
+
+### Commands for Management:
+- **Logs:** `docker-compose logs -f app` (or `sidecar` / `db`)
+- **Stop:** `docker-compose down`
+
 ## Deployment on Coolify
 
 1. Create a new **Application** in Coolify from GitHub.
