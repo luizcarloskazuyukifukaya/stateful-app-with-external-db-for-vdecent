@@ -187,6 +187,7 @@ fi
 
 echo ""
 echo "Useful Commands:"
-echo " - View logs:  $DOCKER_CMD logs -f app"
-echo " - Stop app:   $DOCKER_CMD down"
+echo " - View logs:   $DOCKER_CMD logs -f app"
+echo " - Stop app:    $DOCKER_CMD down"
+echo " - Full Reset:  $DOCKER_CMD down -v (Deletes database data)"
 echo "===================================================="
