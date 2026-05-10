@@ -51,6 +51,39 @@ if [ ! -f .env ]; then
     echo "-> Created .env from .env.example"
 fi
 
+# Step 2: Google Drive Token Check
+TOKEN_FILE="./sidecar/token.json"
+CREDS_FILE="./sidecar/credentials.json"
+
+if [ ! -f "$TOKEN_FILE" ] || [ ! -s "$TOKEN_FILE" ]; then
+    echo "----------------------------------------------------"
+    echo "Warning: Google Drive token.json not found or empty."
+    echo "The sidecar requires this to perform backups."
+    echo "----------------------------------------------------"
+    
+    if [ -f "$CREDS_FILE" ]; then
+        read -p "Would you like to generate token.json now? (y/N): " confirm
+        if [[ $confirm == [yY] || $confirm == [yY][eE][sS] ]]; then
+            echo "-> Starting token generation. Please follow the instructions in your browser."
+            # Check for python and necessary libs
+            if command -v python3 >/dev/null 2>&1; then
+                # Try to run the generation script
+                (cd sidecar && python3 generate_token.py)
+            else
+                echo "Error: python3 not found on host. Cannot generate token automatically."
+                echo "Please follow the manual guide: ./token_json_generation_flow.md"
+                exit 1
+            fi
+        else
+            echo "-> Skipping token generation. Sidecar may fail to start."
+        fi
+    else
+        echo "Error: sidecar/credentials.json not found."
+        echo "Please place your Google API credentials.json in the sidecar/ directory first."
+        exit 1
+    fi
+fi
+
 if command -v npm >/dev/null 2>&1; then
     echo "Step 2: Installing host-side dependencies (Optional, for IDE support)..."
     npm install --silent
