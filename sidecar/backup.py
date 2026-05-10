@@ -23,8 +23,11 @@ def get_gdrive_service():
     token_path = os.getenv('GOOGLE_TOKEN_PATH', 'token.json')
     creds_path = os.getenv('GOOGLE_CREDENTIALS_PATH', 'credentials.json')
 
-    if os.path.exists(token_path):
-        creds = Credentials.from_authorized_user_file(token_path, SCOPES)
+    if os.path.exists(token_path) and os.path.getsize(token_path) > 0:
+        try:
+            creds = Credentials.from_authorized_user_file(token_path, SCOPES)
+        except Exception as e:
+            logger.warning(f"Could not load token from {token_path}: {e}")
     
     if not creds or not creds.valid:
         if creds and creds.expired and creds.refresh_token:
