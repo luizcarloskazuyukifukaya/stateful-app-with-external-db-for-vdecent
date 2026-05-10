@@ -51,6 +51,42 @@ if [ ! -f .env ]; then
     echo "-> Created .env from .env.example"
 fi
 
+# Function to ensure python3 and venv are available
+ensure_python_and_venv() {
+    if ! command -v python3 >/dev/null 2>&1; then
+        echo "-> python3 not found."
+        read -p "Would you like to try installing python3? (y/N): " install_py
+        if [[ $install_py == [yY] || $install_py == [yY][eE][sS] ]]; then
+            if command -v apt-get >/dev/null 2>&1; then
+                sudo apt-get update && sudo apt-get install -y python3
+            else
+                echo "Error: Automated installation only supported for apt-based systems."
+                echo "Please install python3 manually."
+                return 1
+            fi
+        else
+            return 1
+        fi
+    fi
+
+    if ! python3 -m venv --help >/dev/null 2>&1; then
+        echo "-> python3-venv module not found."
+        read -p "Would you like to try installing python3-venv? (y/N): " install_venv
+        if [[ $install_venv == [yY] || $install_venv == [yY][eE][sS] ]]; then
+            if command -v apt-get >/dev/null 2>&1; then
+                sudo apt-get update && sudo apt-get install -y python3-venv
+            else
+                echo "Error: Automated installation only supported for apt-based systems."
+                echo "Please install python3-venv manually."
+                return 1
+            fi
+        else
+            return 1
+        fi
+    fi
+    return 0
+}
+
 # Step 2: Google Drive Token Check
 TOKEN_FILE="./sidecar/token.json"
 CREDS_FILE="./sidecar/credentials.json"
@@ -65,7 +101,8 @@ if [ ! -f "$TOKEN_FILE" ] || [ ! -s "$TOKEN_FILE" ]; then
         read -p "Would you like to generate token.json now? (y/N): " confirm
         if [[ $confirm == [yY] || $confirm == [yY][eE][sS] ]]; then
             echo "-> Setting up temporary Python environment for token generation..."
-            if command -v python3 >/dev/null 2>&1; then
+            
+            if ensure_python_and_venv; then
                 # Setup venv if not exists
                 if [ ! -d "sidecar/venv" ]; then
                     python3 -m venv sidecar/venv
@@ -77,7 +114,7 @@ if [ ! -f "$TOKEN_FILE" ] || [ ! -s "$TOKEN_FILE" ]; then
                 # Run the generation script using venv python
                 (cd sidecar && ./venv/bin/python3 generate_token.py)
             else
-                echo "Error: python3 not found on host. Cannot generate token automatically."
+                echo "Error: Required Python dependencies missing on host."
                 echo "Please follow the manual guide: ./token_json_generation_flow.md"
                 exit 1
             fi
