@@ -149,8 +149,9 @@ This section describes the logic behind the `run_local.sh` script used in the **
     - Automatically update your `.env` file with the correct configuration paths.
 
 ### Commands for Management:
-- **Logs:** `docker-compose logs -f app` (or `sidecar` / `db`)
-- **Stop:** `docker-compose down`
+- **View Logs:** `docker-compose logs -f app` (or `sidecar` / `db`)
+- **Stop App:** `docker-compose down` (Data will be **persisted** in Docker volumes)
+- **Full Reset:** `docker-compose down -v` (This **deletes** the database data, useful for testing initial restore logic)
 
 ## Deployment on Coolify
 
