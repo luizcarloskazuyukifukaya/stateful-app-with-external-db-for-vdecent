@@ -51,7 +51,15 @@ if [ ! -f .env ]; then
     echo "-> Created .env from .env.example"
 fi
 
-echo "Step 2: Starting App + Database via Docker..."
+if command -v npm >/dev/null 2>&1; then
+    echo "Step 2: Installing local dependencies (npm install)..."
+    npm install --silent
+    echo "-> Dependencies installed."
+else
+    echo "Step 2: Skipping local npm install (npm not found on host). Docker will handle this inside the container."
+fi
+
+echo "Step 3: Starting App + Database via Docker..."
 
 # Create override file with selected port
 cat <<OVERRIDE > docker-compose.local.yaml

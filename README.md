@@ -92,8 +92,6 @@ For step-by-step instructions, please refer to:
 - [Google Drive Environment Setup Guide](./google_drive_env_setup_guide.md): Instructions on setting up Google Cloud projects and environment variables.
 - [Token JSON Generation Flow](./token_json_generation_flow.md): Guide on generating the `token.json` file.
 
----
-
 ### Directory Structure
 After cloning the repository, place the files inside the `sidecar` directory:
 ```text
@@ -105,36 +103,40 @@ project-root/
 │   ├── credentials.json
 │   ├── token.json
 │   └── Dockerfile
+```
 
-## Local Development
+## Project Setup
+
+The easiest way to get started is to use the provided automated script.
 
 1. **Setup Environment:**
+   Create the Environment Variables definition file(s) by making a copy from the sample files, and update the values according to your environment.
    ```bash
    cp .env.example .env
    ```
-2. **Install Dependencies:**
+2. **Launch Application:**
+   Run the local deployment script which handles dependency installation, port detection, and Docker orchestration:
+   ```bash
+   chmod +x run_local.sh
+   ./run_local.sh
+   ```
+
+### Manual Setup (Optional)
+If you prefer to run components manually:
+
+1. **Install Dependencies:**
    ```bash
    npm install
    ```
-3. **Run Postgres:**
+2. **Run Postgres:**
    Ensure you have a PostgreSQL instance running and update `DATABASE_URL` in `.env`.
-4. **Start App:**
+3. **Start App:**
    ```bash
    npm start
    ```
 
 ## Testing Locally with Docker (Recommended)
-
-For a quick and consistent local test environment that includes the Database, Application, and Sidecar, use the provided helper script:
-
-1. **Make the script executable:**
-   ```bash
-   chmod +x run_local.sh
-   ```
-2. **Run the script:**
-   ```bash
-   ./run_local.sh
-   ```
+This section describes the logic behind the `run_local.sh` script used in the **Project Setup** above.
 
 ### What `run_local.sh` does:
 - **Port Detection:** Automatically finds an available port (starting from 80, then 8081-8085).
