@@ -146,9 +146,16 @@ Fill:
 - Your email
 
 Add scopes:
-- Google Drive API scopes if requested
+- Google Drive API scopes if requested (e.g., `.../auth/drive.file`)
 
-Add your Google account as a test user if Google asks.
+### **CRITICAL STEP: Add Test Users**
+If your "Publishing status" is set to **Testing** (which is the default):
+1. Find the **Test users** section on the same page.
+2. Click **+ ADD USERS**.
+3. Add the **email address** of the Google account you will use to authorize the app.
+4. Click **SAVE**.
+
+*If you skip this, you will receive an "Error 403: access_denied" during login.*
 
 ---
 
