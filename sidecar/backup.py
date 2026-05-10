@@ -61,13 +61,22 @@ def perform_backup():
         # Assuming pg_dump is available in the container
         # Format: postgresql://username:password@host:port/dbname
         env = os.environ.copy()
-        # We might need to set PGPASSWORD if it's not in the URL or if pg_dump requires it separately
-        # But pg_dump usually accepts the full URL
-        result = subprocess.run(['pg_dump', db_url, '-f', backup_file], capture_output=True, text=True)
+        # We use --clean and --if-exists to make the restore more robust (it will drop tables if they exist)
+        result = subprocess.run(['pg_dump', db_url, '--clean', '--if-exists', '-f', backup_file], capture_output=True, text=True)
         
         if result.returncode != 0:
             logger.error(f"pg_dump failed: {result.stderr}")
             return False, result.stderr
+
+        # Workaround for version mismatch: remove SET transaction_timeout = 0; if present
+        # This parameter was introduced in Postgres 17 and causes errors on older versions.
+        if os.path.exists(backup_file):
+            with open(backup_file, 'r') as f:
+                lines = f.readlines()
+            with open(backup_file, 'w') as f:
+                for line in lines:
+                    if "SET transaction_timeout = 0;" not in line:
+                        f.write(line)
 
         # Upload to Google Drive
         service = get_gdrive_service()
@@ -175,21 +184,29 @@ def is_db_empty():
         conn = psycopg2.connect(db_url)
         cur = conn.cursor()
         
-        # First check if the activities table exists
-        cur.execute("SELECT EXISTS (SELECT FROM information_schema.tables WHERE table_schema = 'public' AND table_name = 'activities')")
-        table_exists = cur.fetchone()[0]
+        # Check if there are any tables in the public schema
+        cur.execute("SELECT count(*) FROM information_schema.tables WHERE table_schema = 'public'")
+        table_count = cur.fetchone()[0]
         
-        if not table_exists:
-            # If table doesn't exist, it's definitely empty
+        if table_count == 0:
             conn.close()
             return True
             
-        # If table exists, check if it has any rows
-        cur.execute("SELECT count(*) FROM activities")
-        row_count = cur.fetchone()[0]
-        conn.close()
+        # If there are tables, check if all of them are empty (optional, but safer)
+        # For now, if there are any tables, we check if the 'activities' table specifically has data
+        # since that's our main data table. Or we can just say if there are tables, it's not empty.
+        # Given the requirements, if it's the "first deployment", there should be NO tables.
+        # But server.js might have created them.
         
-        return row_count == 0
+        cur.execute("SELECT EXISTS (SELECT FROM information_schema.tables WHERE table_schema = 'public' AND table_name = 'activities')")
+        if cur.fetchone()[0]:
+            cur.execute("SELECT count(*) FROM activities")
+            row_count = cur.fetchone()[0]
+            conn.close()
+            return row_count == 0
+        
+        conn.close()
+        return False # Has other tables but not activities? Not empty.
     except Exception as e:
         logger.warning(f"Could not check if DB is empty: {e}. Assuming it might need restore.")
         return True
@@ -227,13 +244,38 @@ def perform_restore(file_id):
         with open(restore_file, "wb") as f:
             f.write(request.execute())
 
+        # Pre-process the restore file for version compatibility
+        if os.path.exists(restore_file):
+            with open(restore_file, 'r') as f:
+                content = f.read()
+            
+            # Remove transaction_timeout which is incompatible with Postgres < 17
+            if "SET transaction_timeout = 0;" in content:
+                logger.info("Removing 'SET transaction_timeout = 0;' for compatibility")
+                content = content.replace("SET transaction_timeout = 0;", "-- SET transaction_timeout = 0; (removed for compatibility)")
+            
+            with open(restore_file, 'w') as f:
+                f.write(content)
+
+        # Clear the database before restore to handle old backups without --clean
+        logger.info("Clearing public schema before restore to ensure a clean slate...")
+        try:
+            conn = psycopg2.connect(db_url)
+            conn.autocommit = True
+            cur = conn.cursor()
+            cur.execute("DROP SCHEMA public CASCADE; CREATE SCHEMA public; GRANT ALL ON SCHEMA public TO public; GRANT ALL ON SCHEMA public TO \"user\";")
+            conn.close()
+            logger.info("Public schema cleared successfully.")
+        except Exception as e:
+            logger.error(f"Failed to clear schema: {e}. Attempting restore anyway...")
+
         # Run psql to restore
-        # WARNING: This might overwrite existing data. In a real scenario, we might want to drop and recreate the DB.
-        # For simplicity, we assume psql can run against the DB_URL.
-        result = subprocess.run(['psql', db_url, '-f', restore_file], capture_output=True, text=True)
+        # We use ON_ERROR_STOP=1 to make sure we catch failures
+        result = subprocess.run(['psql', '-v', 'ON_ERROR_STOP=1', db_url, '-f', restore_file], capture_output=True, text=True)
         
         if result.returncode != 0:
             logger.error(f"psql restore failed: {result.stderr}")
+            # If it failed because of the schema drop, we might need to investigate
             return False, result.stderr
 
         logger.info("Restore completed successfully.")

@@ -24,7 +24,7 @@ def get_auth_token(x_auth_token: str = Header(None)):
     return x_auth_token
 
 @app.post("/api/backup")
-async def trigger_backup():
+async def trigger_backup(token: str = Depends(get_auth_token)):
     success, message = perform_backup()
     if success:
         return {"status": "success", "file_id": message}

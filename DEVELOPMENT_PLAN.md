@@ -46,10 +46,16 @@ This plan outlines the implementation of a sidecar container for automatic datab
 - [x] Verify purge logic works (automatic and manual).
 
 ## Phase 7: Initial Restore on Startup
-- [ ] Implement `wait_for_db` logic to ensure PostgreSQL is ready.
-- [ ] Implement `restore_latest_on_startup` logic:
-    - On sidecar start, check if the database is empty or if it's the first run.
-    - Fetch the latest backup ID from Google Drive using the `list_backups` logic.
-    - Perform restore if a backup exists.
-- [ ] Update `main.py` startup event to trigger the initial restore.
-- [ ] Verify that initial restore correctly populates the database on fresh deployment.
+- [x] Implement `wait_for_db` logic to ensure PostgreSQL is ready.
+- [x] Implement `restore_latest_on_startup` logic:
+    - [x] On sidecar start, check if the database is empty or if it's the first run.
+    - [x] Fetch the latest backup ID from Google Drive using the `list_backups` logic.
+    - [x] Perform restore if a backup exists.
+- [x] Update `main.py` startup event to trigger the initial restore.
+- [x] Verify that initial restore correctly populates the database on fresh deployment.
+
+## Phase 8: Robustness & Compatibility
+- [x] Add `--clean` and `--if-exists` to `pg_dump` for more reliable restores.
+- [x] Implement pre-processing of SQL dumps to handle version mismatches (e.g., removing `transaction_timeout`).
+- [x] Improve `is_db_empty` logic to be more generic across different schemas.
+- [ ] Add more comprehensive error handling and logging for Google Drive API interactions.

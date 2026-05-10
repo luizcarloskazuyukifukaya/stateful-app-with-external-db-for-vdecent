@@ -58,6 +58,7 @@ The sidecar exposes an API on port `8000`:
 
 #### Trigger Manual Backup
 - **Endpoint:** `POST /api/backup`
+- **Headers:** `X-Auth-Token: <your-restore-auth-token>`
 - **Description:** Triggers an immediate backup of the database to Google Drive and runs the purge logic.
 
 #### List Backups
@@ -89,8 +90,8 @@ Before starting the application, you must provide Google OAuth credentials files
 
 ### Detailed Setup Guides
 For step-by-step instructions, please refer to:
-- [Google Drive Environment Setup Guide](./google_drive_env_setup_guide.md): Instructions on setting up Google Cloud projects and environment variables.
-- [Token JSON Generation Flow](./token_json_generation_flow.md): Guide on generating the `token.json` file.
+- [Google Drive Environment Setup Guide](./doc/google_drive_env_setup_guide.md): Instructions on setting up Google Cloud projects and environment variables.
+- [Token JSON Generation Flow](./doc/token_json_generation_flow.md): Guide on generating the `token.json` file.
 
 ### Directory Structure
 After cloning the repository, place the files inside the `sidecar` directory:
@@ -147,6 +148,14 @@ This section describes the logic behind the `run_local.sh` script used in the **
     - Prompt to install Python dependencies on the host.
     - Launch an interactive Google OAuth flow to generate the `token.json`.
     - Automatically update your `.env` file with the correct configuration paths.
+
+### Testing the API
+A convenience script `test_api.sh` is provided to interact with the sidecar API from your terminal. It automatically reads the `RESTORE_AUTH_TOKEN` from your `.env` file.
+
+- **Trigger Backup:** `./test_api.sh -b`
+- **List Backups:** `./test_api.sh -l`
+- **Restore Backup:** `./test_api.sh -r <file_id>`
+- **Purge Backups:** `./test_api.sh -p`
 
 ### Commands for Management:
 - **View Logs:** `docker-compose logs -f app` (or `sidecar` / `db`)
