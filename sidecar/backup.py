@@ -171,13 +171,22 @@ def is_db_empty():
         db_url = os.getenv('DATABASE_URL')
         conn = psycopg2.connect(db_url)
         cur = conn.cursor()
-        # Check if the 'activities' table exists and has data. 
-        # Note: The table name depends on the app. In the source repo it was 'activities'.
-        # We check for any user table as a generic indicator.
-        cur.execute("SELECT count(*) FROM information_schema.tables WHERE table_schema = 'public'")
-        table_count = cur.fetchone()[0]
+        
+        # First check if the activities table exists
+        cur.execute("SELECT EXISTS (SELECT FROM information_schema.tables WHERE table_schema = 'public' AND table_name = 'activities')")
+        table_exists = cur.fetchone()[0]
+        
+        if not table_exists:
+            # If table doesn't exist, it's definitely empty
+            conn.close()
+            return True
+            
+        # If table exists, check if it has any rows
+        cur.execute("SELECT count(*) FROM activities")
+        row_count = cur.fetchone()[0]
         conn.close()
-        return table_count == 0
+        
+        return row_count == 0
     except Exception as e:
         logger.warning(f"Could not check if DB is empty: {e}. Assuming it might need restore.")
         return True
