@@ -5,7 +5,8 @@ services:
     environment:
       - DATABASE_URL=postgres://user:password@db:5432/activitylog
     depends_on:
-      - db
+      db:
+        condition: service_healthy
 
   db:
     image: postgres:16-alpine
@@ -16,6 +17,11 @@ services:
       - POSTGRES_DB=activitylog
     volumes:
       - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U user -d activitylog"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
 
   sidecar:
     build: ./sidecar
@@ -32,7 +38,8 @@ services:
       - ./sidecar/credentials.json:/app/credentials.json
       - ./sidecar/token.json:/app/token.json
     depends_on:
-      - db
+      db:
+        condition: service_healthy
     ports:
       - "8000:8000"
 

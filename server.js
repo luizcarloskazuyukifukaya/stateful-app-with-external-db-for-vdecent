@@ -23,22 +23,31 @@ app.use((req, res, next) => {
   next();
 });
 
-// Database Initialization
-const initDb = async () => {
-  try {
-    await pool.query(`
-      CREATE TABLE IF NOT EXISTS activities (
-        id SERIAL PRIMARY KEY,
-        activity_type VARCHAR(50) NOT NULL,
-        start_time TIMESTAMP NOT NULL,
-        end_time TIMESTAMP NOT NULL,
-        details TEXT,
-        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-      );
-    `);
-    console.log('Database initialized successfully');
-  } catch (err) {
-    console.error('Database initialization error:', err);
+// Database Initialization with Retry
+const initDb = async (retries = 5, delay = 5000) => {
+  for (let i = 0; i < retries; i++) {
+    try {
+      await pool.query(`
+        CREATE TABLE IF NOT EXISTS activities (
+          id SERIAL PRIMARY KEY,
+          activity_type VARCHAR(50) NOT NULL,
+          start_time TIMESTAMP NOT NULL,
+          end_time TIMESTAMP NOT NULL,
+          details TEXT,
+          created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        );
+      `);
+      console.log('Database initialized successfully');
+      return;
+    } catch (err) {
+      console.error(`Database initialization attempt ${i + 1} failed:`, err.message);
+      if (i < retries - 1) {
+        console.log(`Retrying in ${delay / 1000}s...`);
+        await new Promise(res => setTimeout(res, delay));
+      } else {
+        console.error('Max retries reached. Database initialization failed.');
+      }
+    }
   }
 };
 
