@@ -107,7 +107,7 @@ project-root/
 
 ## Project Setup
 
-The easiest way to get started is to use the provided automated script.
+The easiest way to get started is to use the provided automated script. **Note: Node.js and npm are NOT required on your host machine**, as Docker handles everything internally.
 
 1. **Setup Environment:**
    Create the Environment Variables definition file(s) by making a copy from the sample files, and update the values according to your environment.
@@ -122,7 +122,7 @@ The easiest way to get started is to use the provided automated script.
    ```
 
 ### Manual Setup (Optional)
-If you prefer to run components manually:
+If you prefer to run components manually (requires Node.js/npm and PostgreSQL installed on your host):
 
 1. **Install Dependencies:**
    ```bash

@@ -52,11 +52,11 @@ if [ ! -f .env ]; then
 fi
 
 if command -v npm >/dev/null 2>&1; then
-    echo "Step 2: Installing local dependencies (npm install)..."
+    echo "Step 2: Installing host-side dependencies (Optional, for IDE support)..."
     npm install --silent
-    echo "-> Dependencies installed."
+    echo "-> Done."
 else
-    echo "Step 2: Skipping local npm install (npm not found on host). Docker will handle this inside the container."
+    echo "Step 2: Skipping host-side npm install (Not found). Docker will handle all dependencies internally."
 fi
 
 echo "Step 3: Starting App + Database via Docker..."
