@@ -64,11 +64,18 @@ if [ ! -f "$TOKEN_FILE" ] || [ ! -s "$TOKEN_FILE" ]; then
     if [ -f "$CREDS_FILE" ]; then
         read -p "Would you like to generate token.json now? (y/N): " confirm
         if [[ $confirm == [yY] || $confirm == [yY][eE][sS] ]]; then
-            echo "-> Starting token generation. Please follow the instructions in your browser."
-            # Check for python and necessary libs
+            echo "-> Setting up temporary Python environment for token generation..."
             if command -v python3 >/dev/null 2>&1; then
-                # Try to run the generation script
-                (cd sidecar && python3 generate_token.py)
+                # Setup venv if not exists
+                if [ ! -d "sidecar/venv" ]; then
+                    python3 -m venv sidecar/venv
+                fi
+                # Install requirements in venv
+                sidecar/venv/bin/pip install --quiet google-auth-oauthlib google-api-python-client
+                
+                echo "-> Starting token generation. Please follow the instructions in your browser."
+                # Run the generation script using venv python
+                (cd sidecar && ./venv/bin/python3 generate_token.py)
             else
                 echo "Error: python3 not found on host. Cannot generate token automatically."
                 echo "Please follow the manual guide: ./token_json_generation_flow.md"

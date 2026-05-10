@@ -1,7 +1,8 @@
-node_modules
+node_modules/
 .env
 .DS_Store
 *.backup
-GEMINI.md
 credentials.json
 token.json
+sidecar/venv/
+docker-compose.local.yaml
