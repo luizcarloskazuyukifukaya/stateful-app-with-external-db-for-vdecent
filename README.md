@@ -143,6 +143,10 @@ This section describes the logic behind the `run_local.sh` script used in the **
 - **Environment Setup:** Creates a `.env` file from `.env.example` if it doesn't exist.
 - **Docker Orchestration:** Build and launches all containers (App, DB, Sidecar) using `docker-compose`.
 - **Access URLs:** Provides the local and network URLs to access the application once it's up.
+- **Interactive Setup:** If `token.json` is missing, the script will:
+    - Prompt to install Python dependencies on the host.
+    - Launch an interactive Google OAuth flow to generate the `token.json`.
+    - Automatically update your `.env` file with the correct configuration paths.
 
 ### Commands for Management:
 - **Logs:** `docker-compose logs -f app` (or `sidecar` / `db`)

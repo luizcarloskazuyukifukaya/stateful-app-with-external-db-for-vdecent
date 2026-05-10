@@ -112,7 +112,24 @@ if [ ! -f "$TOKEN_FILE" ] || [ ! -s "$TOKEN_FILE" ]; then
                 
                 echo "-> Starting token generation. Please follow the instructions in your browser."
                 # Run the generation script using venv python
-                (cd sidecar && ./venv/bin/python3 generate_token.py)
+                if (cd sidecar && ./venv/bin/python3 generate_token.py); then
+                    echo "-> token.json generated successfully."
+                    # Update .env to point to the new token if it was using placeholder
+                    if grep -q "GOOGLE_TOKEN_PATH=token.json" .env; then
+                        echo "-> .env is already configured for token.json"
+                    else
+                        # Ensure GOOGLE_TOKEN_PATH is set in .env
+                        if grep -q "GOOGLE_TOKEN_PATH=" .env; then
+                            sed -i 's|GOOGLE_TOKEN_PATH=.*|GOOGLE_TOKEN_PATH=token.json|' .env
+                        else
+                            echo "GOOGLE_TOKEN_PATH=token.json" >> .env
+                        fi
+                        echo "-> Updated GOOGLE_TOKEN_PATH in .env"
+                    fi
+                else
+                    echo "Error: Token generation failed."
+                    exit 1
+                fi
             else
                 echo "Error: Required Python dependencies missing on host."
                 echo "Please follow the manual guide: ./token_json_generation_flow.md"

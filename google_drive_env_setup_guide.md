@@ -150,7 +150,7 @@ Add scopes:
 
 ### **CRITICAL STEP: Add Test Users**
 If your "Publishing status" is set to **Testing** (which is the default):
-1. Find the **Test users** section on the same page.
+1. Find the **Test users** section on the same page. (Check Audience on the left hand-side menu)
 2. Click **+ ADD USERS**.
 3. Add the **email address** of the Google account you will use to authorize the app.
 4. Click **SAVE**.
