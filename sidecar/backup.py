@@ -2,6 +2,7 @@ import os
 import datetime
 import subprocess
 import logging
+import base64
 from google.auth.transport.requests import Request
 from google.oauth2.credentials import Credentials
 from google_auth_oauthlib.flow import InstalledAppFlow
@@ -16,12 +17,23 @@ logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(
 logger = logging.getLogger(__name__)
 
 # Scopes for Google Drive API
-SCOPES = ['https://www.googleapis.com/auth/drive.file']
+SCOPES = ['https://www.googleapis.com/auth/drive']
 
 def get_gdrive_service():
     creds = None
     token_path = os.getenv('GOOGLE_TOKEN_PATH', 'token.json')
     creds_path = os.getenv('GOOGLE_CREDENTIALS_PATH', 'credentials.json')
+    token_b64 = os.getenv('GOOGLE_API_TOKEN_B64')
+
+    # If GOOGLE_API_TOKEN_B64 is provided, decode and write to token_path
+    if token_b64:
+        logger.info(f"GOOGLE_API_TOKEN_B64 detected. Writing to {token_path}...")
+        try:
+            token_json = base64.b64decode(token_b64).decode('utf-8')
+            with open(token_path, 'w') as f:
+                f.write(token_json)
+        except Exception as e:
+            logger.error(f"Failed to decode GOOGLE_API_TOKEN_B64: {e}")
 
     if os.path.exists(token_path) and os.path.getsize(token_path) > 0:
         try:
@@ -138,18 +150,24 @@ def list_backups():
         folder_id = os.getenv('GOOGLE_DRIVE_FOLDER_ID')
         service = get_gdrive_service()
         
-        query = "mimeType = 'application/sql' and trashed = false"
+        # Be inclusive of different MIME types and extensions for manually uploaded files
+        query = "(mimeType = 'application/sql' or mimeType = 'text/plain' or mimeType = 'text/x-sql' or name contains '.sql') and trashed = false"
         if folder_id:
             query += f" and '{folder_id}' in parents"
         
         results = service.files().list(
             q=query,
             spaces='drive',
-            fields='files(id, name, createdTime, size)',
+            fields='files(id, name, createdTime, size, mimeType)',
             orderBy='createdTime desc'
         ).execute()
         
-        return True, results.get('files', [])
+        files = results.get('files', [])
+        
+        # Further filter in Python to ensure we only get .sql files if they matched by broad MIME types
+        backups = [f for f in files if f['name'].lower().endswith('.sql') or f.get('mimeType') == 'application/sql']
+        
+        return True, backups
     except Exception as e:
         logger.exception("An error occurred while listing backups")
         return False, str(e)

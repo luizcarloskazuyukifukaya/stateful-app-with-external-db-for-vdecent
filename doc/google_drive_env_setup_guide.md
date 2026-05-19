@@ -146,7 +146,7 @@ Fill:
 - Your email
 
 Add scopes:
-- Google Drive API scopes if requested (e.g., `.../auth/drive.file`)
+- Google Drive API scopes if requested (e.g., `.../auth/drive`)
 
 ### **CRITICAL STEP: Add Test Users**
 If your "Publishing status" is set to **Testing** (which is the default):

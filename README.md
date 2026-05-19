@@ -170,6 +170,24 @@ A convenience script `test_api.sh` is provided to interact with the sidecar API 
 4. Set your **Domain** (e.g., `https://activity.yourdomain.com`).
 5. Coolify will handle the mapping to the container's port 80 automatically.
 
+### Google Token in Coolify
+
+When deploying to Coolify, providing physical files like `token.json` can be inconvenient. You can instead provide the token content as a Base64-encoded environment variable.
+
+1. **Generate your `token.json`** locally following the [Setup Guide](./doc/token_json_generation_flow.md).
+2. **Encode the file to Base64**:
+   ```bash
+   # Linux/macOS
+   base64 -w 0 sidecar/token.json
+   ```
+3. **Set the Environment Variable in Coolify**:
+   - In your Coolify Application settings, go to **Environment Variables**.
+   - Add a new variable:
+     - **Key:** `GOOGLE_API_TOKEN_B64`
+     - **Value:** Paste the base64 string generated in step 2.
+4. **Redeploy**:
+   - The sidecar will automatically detect this variable, decode it, and use it for Google Drive authentication.
+
 ## License
 MIT
 

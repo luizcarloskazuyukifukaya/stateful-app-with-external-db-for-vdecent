@@ -58,4 +58,5 @@ This plan outlines the implementation of a sidecar container for automatic datab
 - [x] Add `--clean` and `--if-exists` to `pg_dump` for more reliable restores.
 - [x] Implement pre-processing of SQL dumps to handle version mismatches (e.g., removing `transaction_timeout`).
 - [x] Improve `is_db_empty` logic to be more generic across different schemas.
+- [x] Fix MIME type filtering in Google Drive queries to be more inclusive of manually uploaded files.
 - [ ] Add more comprehensive error handling and logging for Google Drive API interactions.
