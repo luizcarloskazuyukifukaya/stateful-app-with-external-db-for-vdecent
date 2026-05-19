@@ -23,9 +23,20 @@ def get_gdrive_service():
     creds = None
     token_path = os.getenv('GOOGLE_TOKEN_PATH', 'token.json')
     creds_path = os.getenv('GOOGLE_CREDENTIALS_PATH', 'credentials.json')
+    
+    # Handle Base64 encoded credentials and tokens from environment variables
+    creds_b64 = os.getenv('GOOGLE_API_CREDENTIALS_B64')
     token_b64 = os.getenv('GOOGLE_API_TOKEN_B64')
 
-    # If GOOGLE_API_TOKEN_B64 is provided, decode and write to token_path
+    if creds_b64:
+        logger.info(f"GOOGLE_API_CREDENTIALS_B64 detected. Writing to {creds_path}...")
+        try:
+            creds_json = base64.b64decode(creds_b64).decode('utf-8')
+            with open(creds_path, 'w') as f:
+                f.write(creds_json)
+        except Exception as e:
+            logger.error(f"Failed to decode GOOGLE_API_CREDENTIALS_B64: {e}")
+
     if token_b64:
         logger.info(f"GOOGLE_API_TOKEN_B64 detected. Writing to {token_path}...")
         try:

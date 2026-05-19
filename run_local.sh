@@ -155,12 +155,18 @@ fi
 
 echo "Step 3: Starting App + Database via Docker..."
 
-# Create override file with selected port
+# Create local override file with selected port and local volume mounts
 cat <<OVERRIDE > docker-compose.local.yaml
 services:
   app:
     ports:
       - "$PORT:80"
+  sidecar:
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./sidecar/credentials.json:/app/credentials.json
+      - ./sidecar/token.json:/app/token.json
 OVERRIDE
 
 echo "-> Building and launching containers..."

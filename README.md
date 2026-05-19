@@ -164,29 +164,50 @@ A convenience script `test_api.sh` is provided to interact with the sidecar API 
 
 ## Deployment on Coolify
 
-1. Create a new **Application** in Coolify from GitHub.
-2. Select **Docker Compose** as the build pack.
-3. The `docker-compose.yaml` will automatically set up both the Node.js app and the PostgreSQL database.
-4. Set your **Domain** (e.g., `https://activity.yourdomain.com`).
-5. Coolify will handle the mapping to the container's port 80 automatically.
+This application is optimized for deployment on [Coolify](https://coolify.io/).
 
-### Google Token in Coolify
+### 1. Docker Compose Configuration
+When creating a new "Docker Compose" resource in Coolify, use the contents of:
+- **`docker-compose.coolify.yaml`** (This file includes specific overrides for the Coolify environment).
 
-When deploying to Coolify, providing physical files like `token.json` can be inconvenient. You can instead provide the token content as a Base64-encoded environment variable.
+Coolify will use `docker-compose.yaml` as the base and apply the labels from `docker-compose.coolify.yaml`.
 
-1. **Generate your `token.json`** locally following the [Setup Guide](./doc/token_json_generation_flow.md).
-2. **Encode the file to Base64**:
-   ```bash
-   # Linux/macOS
-   base64 -w 0 sidecar/token.json
-   ```
-3. **Set the Environment Variable in Coolify**:
-   - In your Coolify Application settings, go to **Environment Variables**.
-   - Add a new variable:
-     - **Key:** `GOOGLE_API_TOKEN_B64`
-     - **Value:** Paste the base64 string generated in step 2.
-4. **Redeploy**:
-   - The sidecar will automatically detect this variable, decode it, and use it for Google Drive authentication.
+### 2. Required Environment Variables
+In the Coolify **Environment Variables** section, define the following:
+
+- `DATABASE_URL`: `postgres://user:password@db:5432/activitylog`
+- `GOOGLE_DRIVE_FOLDER_ID`: Your Google Drive folder ID.
+- `RESTORE_AUTH_TOKEN`: A secret token for the restore/backup API.
+- `GOOGLE_API_CREDENTIALS_B64`: Base64 encoded string of `sidecar/credentials.json`.
+- `GOOGLE_API_TOKEN_B64`: Base64 encoded string of `sidecar/token.json`.
+- `BACKUP_RETENTION_COUNT`: (Optional) Number of backups to keep (e.g., `5`).
+- `BACKUP_INTERVAL_MINS`: (Optional) Frequency of backups (e.g., `5`).
+
+### 3. How to generate BASE64 strings
+Generate the Base64 strings from your local files using these commands:
+
+**Linux / macOS / WSL:**
+```bash
+# Encode credentials.json (single line)
+base64 -w 0 sidecar/credentials.json > creds_b64.txt
+
+# Encode token.json (single line)
+base64 -w 0 sidecar/token.json > token_b64.txt
+```
+
+**Windows (PowerShell):**
+```powershell
+# Encode credentials.json
+[Convert]::ToBase64String([IO.File]::ReadAllBytes("sidecar/credentials.json")) | Out-File -FilePath creds_b64.txt
+
+# Encode token.json
+[Convert]::ToBase64String([IO.File]::ReadAllBytes("sidecar/token.json")) | Out-File -FilePath token_b64.txt
+```
+
+Copy the content of the `.txt` files into the Coolify Environment Variable values.
+
+### 4. Backup & Restore APIs
+The sidecar API is available internally at `http://sidecar:8000`. You can trigger operations using `curl` from within the app container or expose the sidecar port in Coolify if you need external access.
 
 ## License
 MIT

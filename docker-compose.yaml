@@ -34,14 +34,11 @@ services:
       - GOOGLE_DRIVE_FOLDER_ID=${GOOGLE_DRIVE_FOLDER_ID}
       - GOOGLE_CREDENTIALS_PATH=/app/credentials.json
       - GOOGLE_TOKEN_PATH=/app/token.json
-    volumes:
-      - ./sidecar/credentials.json:/app/credentials.json
-      - ./sidecar/token.json:/app/token.json
+      - GOOGLE_API_CREDENTIALS_B64=${GOOGLE_API_CREDENTIALS_B64}
+      - GOOGLE_API_TOKEN_B64=${GOOGLE_API_TOKEN_B64}
     depends_on:
       db:
         condition: service_healthy
-    ports:
-      - "8000:8000"
 
 volumes:
   postgres_data:
